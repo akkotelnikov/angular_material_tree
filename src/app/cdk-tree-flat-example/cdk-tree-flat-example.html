@@ -1,0 +1,19 @@
+<cdk-tree [dataSource]="dataSource" [treeControl]="treeControl">
+  <cdk-tree-node *cdkTreeNodeDef="let node" cdkTreeNodePadding class="example-tree-node">
+    <button mat-icon-button disabled></button>
+    11 {{node.filename}}:  {{node.type}}
+  </cdk-tree-node>
+  <cdk-tree-node *cdkTreeNodeDef="let node; when: hasChild" cdkTreeNodePadding class="example-tree-node">
+    <button mat-icon-button [attr.aria-label]="'toggle ' + node.filename" cdkTreeNodeToggle>
+      <mat-icon class="mat-icon-rtl-mirror">
+        {{treeControl.isExpanded(node) ? 'expand_more' : 'chevron_right'}}
+      </mat-icon>
+    </button>
+    {{node.filename}}:  {{node.type}}
+  </cdk-tree-node>
+</cdk-tree>
+
+
+<!-- Copyright 2018 Google Inc. All Rights Reserved.
+    Use of this source code is governed by an MIT-style license that
+    can be found in the LICENSE file at http://angular.io/license -->
