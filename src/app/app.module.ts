@@ -39,11 +39,15 @@ import {
   MatTreeModule
 } from '@angular/material';
 import { CdkTreeFlatExample, FileDatabase } from './cdk-tree-flat-example/cdk-tree-flat-example';
+import { ChecklistDatabase, TreeChecklistExample } from './tree-checklist-example/tree-checklist-example';
+import { DynamicDataSource, TreeDynamicExample } from './tree-dynamic-example/tree-dynamic-example';
 
 @NgModule({
   declarations: [
     AppComponent,
-    CdkTreeFlatExample
+    CdkTreeFlatExample,
+    TreeChecklistExample,
+    TreeDynamicExample
   ],
   imports: [
     BrowserModule,
@@ -85,7 +89,9 @@ import { CdkTreeFlatExample, FileDatabase } from './cdk-tree-flat-example/cdk-tr
     MatTreeModule,
   ],
   providers: [
-    FileDatabase
+    FileDatabase,
+    ChecklistDatabase,
+    DynamicDataSource
   ],
   bootstrap: [AppComponent]
 })

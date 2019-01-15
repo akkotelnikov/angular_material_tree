@@ -2,6 +2,8 @@ import {FlatTreeControl} from '@angular/cdk/tree';
 import {Component, Injectable} from '@angular/core';
 import {MatTreeFlatDataSource, MatTreeFlattener} from '@angular/material/tree';
 import {BehaviorSubject, Observable, of as observableOf} from 'rxjs';
+import {TodoItemFlatNode} from "../tree-checklist-example/tree-checklist-example";
+import {SelectionModel} from "@angular/cdk/collections";
 
 /**
  * File node data with nested structure.
@@ -124,6 +126,9 @@ export class CdkTreeFlatExample {
   treeFlattener: MatTreeFlattener<FileNode, FileFlatNode>;
   dataSource: MatTreeFlatDataSource<FileNode, FileFlatNode>;
 
+  /** The selection for checklist */
+  checklistSelection = new SelectionModel<FileFlatNode>(true /* multiple */);
+
   constructor(database: FileDatabase) {
     this.treeFlattener = new MatTreeFlattener(this.transformer, this._getLevel,
       this._isExpandable, this._getChildren);
@@ -132,6 +137,7 @@ export class CdkTreeFlatExample {
 
     database.dataChange.subscribe(data => {
       this.dataSource.data = data;
+      console.log('dataSource.data', this.dataSource.data);
     });
   }
 
@@ -146,6 +152,72 @@ export class CdkTreeFlatExample {
   private _isExpandable = (node: FileFlatNode) => node.expandable;
 
   private _getChildren = (node: FileNode): Observable<FileNode[]> => observableOf(node.children);
+
+  /** Toggle a leaf to-do item selection. Check all the parents to see if they changed */
+  todoLeafItemSelectionToggle(node: FileFlatNode): void {
+    this.checklistSelection.toggle(node);
+    this.checkAllParentsSelection(node);
+  }
+
+  /* Checks all the parents when a leaf node is selected/unselected */
+  checkAllParentsSelection(node: FileFlatNode): void {
+    let parent: FileFlatNode | null = this.getParentNode(node);
+    while (parent) {
+      this.checkRootNodeSelection(parent);
+      parent = this.getParentNode(parent);
+    }
+  }
+
+  /** Check root node checked state and change it accordingly */
+  checkRootNodeSelection(node: FileFlatNode): void {
+    const nodeSelected = this.checklistSelection.isSelected(node);
+    const descendants = this.treeControl.getDescendants(node);
+    const descAllSelected = descendants.every(child =>
+      this.checklistSelection.isSelected(child)
+    );
+    if (nodeSelected && !descAllSelected) {
+      this.checklistSelection.deselect(node);
+    } else if (!nodeSelected && descAllSelected) {
+      this.checklistSelection.select(node);
+    }
+  }
+
+  /* Get the parent node of a node */
+  getParentNode(node: FileFlatNode): FileFlatNode | null {
+    const currentLevel = this._getLevel(node);
+
+    if (currentLevel < 1) {
+      return null;
+    }
+
+    const startIndex = this.treeControl.dataNodes.indexOf(node) - 1;
+
+    for (let i = startIndex; i >= 0; i--) {
+      const currentNode = this.treeControl.dataNodes[i];
+
+      if (this._getLevel(currentNode) < currentLevel) {
+        return currentNode;
+      }
+    }
+    return null;
+  }
+
+  /** Whether all the descendants of the node are selected. */
+  descendantsAllSelected(node: FileFlatNode): boolean {
+    const descendants = this.treeControl.getDescendants(node);
+    const descAllSelected = descendants.every(child =>
+      this.checklistSelection.isSelected(child)
+    );
+    return descAllSelected;
+  }
+
+  /** Whether part of the descendants are selected */
+  descendantsPartiallySelected(node: FileFlatNode): boolean {
+    const descendants = this.treeControl.getDescendants(node);
+    const result = descendants.some(child => this.checklistSelection.isSelected(child));
+    return result && !this.descendantsAllSelected(node);
+  }
+
 }
 
 
