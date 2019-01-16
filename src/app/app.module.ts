@@ -41,13 +41,15 @@ import {
 import { CdkTreeFlatExample, FileDatabase } from './cdk-tree-flat-example/cdk-tree-flat-example';
 import { ChecklistDatabase, TreeChecklistExample } from './tree-checklist-example/tree-checklist-example';
 import { DynamicDataSource, TreeDynamicExample } from './tree-dynamic-example/tree-dynamic-example';
+import {TreeNestedOverviewExample} from './tree-nested-overview-example/tree-nested-overview-example';
 
 @NgModule({
   declarations: [
     AppComponent,
     CdkTreeFlatExample,
     TreeChecklistExample,
-    TreeDynamicExample
+    TreeDynamicExample,
+    TreeNestedOverviewExample
   ],
   imports: [
     BrowserModule,
