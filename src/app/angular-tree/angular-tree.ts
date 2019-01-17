@@ -8,12 +8,14 @@ import {BehaviorSubject} from 'rxjs';
  * Node for to-do item
  */
 export class TodoItemNode {
-    children: TodoItemNode[];
+    id: number | string | null;
     item: string;
+    children: TodoItemNode[];
 }
 
 /** Flat to-do item node with expandable and level information */
 export class TodoItemFlatNode {
+    id: number | string | null;
     item: string;
     level: number;
     expandable: boolean;
@@ -22,23 +24,85 @@ export class TodoItemFlatNode {
 /**
  * The Json object for to-do list data.
  */
-const TREE_DATA = {
-    Groceries: {
-        'Almond Meal flour': null,
-        'Organic eggs': null,
-        'Protein Powder': null,
-        Fruits: {
-            Apple: null,
-            Berries: ['Blueberry', 'Raspberry'],
-            Orange: null
-        }
-    },
-    Reminders: [
-        'Cook dinner',
-        'Read the Material Design spec',
-        'Upgrade Application to Angular'
-    ]
-};
+// const TREE_DATA = {
+//     Groceries: {
+//         'Almond Meal flour': null,
+//         'Organic eggs': null,
+//         'Protein Powder': null,
+//         Fruits: {
+//             Apple: null,
+//             Berries: ['Blueberry', 'Raspberry'],
+//             Orange: null
+//         }
+//     },
+//     Reminders: [
+//         'Cook dinner',
+//         'Read the Material Design spec',
+//         'Upgrade Application to Angular'
+//     ]
+// };
+
+const TREE_DATA = [
+    {
+        id: 1,
+        item: 'Main Checklist',
+        children: [
+            {
+                id: 2,
+                item: 'Procedures that Apply to all Projects and tests',
+                children: [
+                    {
+                        id: 3,
+                        item: 'List of devices to be used on tests',
+                        children: [
+                            {
+                                id: 5,
+                                item: '[0.1.3B]',
+                                children: []
+                            },
+                            {
+                                id: 6,
+                                item: '[0.1.3C]',
+                                children: []
+                            },
+                            {
+                                id: 7,
+                                item: '[0.1.3A]',
+                                children: []
+                            }
+                        ]
+                    },
+                    {
+                        id: 4,
+                        item: 'Testing documentation',
+                        children: [
+                            {
+                                id: 8,
+                                item: '[0.1.1B]',
+                                children: []
+                            },
+                            {
+                                id: 9,
+                                item: '[0.1.4]',
+                                children: []
+                            },
+                            {
+                                id: 10,
+                                item: '[0.1.1A]',
+                                children: []
+                            },
+                            {
+                                id: 10,
+                                item: '[0.1.5]',
+                                children: []
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+];
 
 /**
  * Checklist database, it can build a tree structured Json object.
@@ -68,20 +132,16 @@ export class ChecklistDatabase {
      * Build the file structure tree. The `value` is the Json object, or a sub-tree of a Json object.
      * The return value is the list of `TodoItemNode`.
      */
-    buildFileTree(obj: {[key: string]: any}, level: number): TodoItemNode[] {
-        return Object.keys(obj).reduce<TodoItemNode[]>((accumulator, key) => {
-            const value = obj[key];
+    buildFileTree(obj: any[], level: number): TodoItemNode[] {
+        return obj.reduce<TodoItemNode[]>((accumulator, entity) => {
+            console.log('reduce', accumulator, entity);
             const node = new TodoItemNode();
-            node.item = key;
-
-            if (value != null) {
-                if (typeof value === 'object') {
-                    node.children = this.buildFileTree(value, level + 1);
-                } else {
-                    node.item = value;
-                }
+            node.id = entity.id;
+            node.item = entity.item;
+            node.children = entity.children;
+            if (!!node.children.length) {
+                node.children = this.buildFileTree(node.children, level + 1);
             }
-
             return accumulator.concat(node);
         }, []);
     }
@@ -89,7 +149,11 @@ export class ChecklistDatabase {
     /** Add an item to to-do list */
     insertItem(parent: TodoItemNode, name: string) {
         if (parent.children) {
-            parent.children.push({item: name} as TodoItemNode);
+            const node = new TodoItemNode();
+            node.item = name;
+            node.id = null;
+            node.children = [];
+            parent.children.push(node);
             this.dataChange.next(this.data);
         }
     }
@@ -162,7 +226,7 @@ export class AngularTree {
             : new TodoItemFlatNode();
         flatNode.item = node.item;
         flatNode.level = level;
-        flatNode.expandable = !!node.children;
+        flatNode.expandable = !!node.children.length;
         this.flatNodeMap.set(flatNode, node);
         this.nestedNodeMap.set(node, flatNode);
         return flatNode;
@@ -250,6 +314,7 @@ export class AngularTree {
 
     /** Select the category so we can insert the new item. */
     addNewItem(node: TodoItemFlatNode) {
+        console.log('addNewItem', this.flatNodeMap);
         const parentNode = this.flatNodeMap.get(node);
         this.database.insertItem(parentNode!, '');
         this.treeControl.expand(node);

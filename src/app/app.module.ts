@@ -41,8 +41,9 @@ import {
 import { CdkTreeFlatExample, FileDatabase } from './cdk-tree-flat-example/cdk-tree-flat-example';
 import { ChecklistDatabase, TreeChecklistExample } from './tree-checklist-example/tree-checklist-example';
 import { DynamicDataSource, TreeDynamicExample } from './tree-dynamic-example/tree-dynamic-example';
-import {TreeNestedOverviewExample} from './tree-nested-overview-example/tree-nested-overview-example';
+import { TreeNestedOverviewExample } from './tree-nested-overview-example/tree-nested-overview-example';
 import { AngularTree } from './angular-tree/angular-tree';
+import { ChecklistDatabaseDraggable, TreeDraggable } from './tree-draggable/tree-draggable';
 
 @NgModule({
   declarations: [
@@ -51,7 +52,8 @@ import { AngularTree } from './angular-tree/angular-tree';
     TreeChecklistExample,
     TreeDynamicExample,
     TreeNestedOverviewExample,
-    AngularTree
+    AngularTree,
+    TreeDraggable
   ],
   imports: [
     BrowserModule,
@@ -95,7 +97,8 @@ import { AngularTree } from './angular-tree/angular-tree';
   providers: [
     FileDatabase,
     ChecklistDatabase,
-    DynamicDataSource
+    DynamicDataSource,
+    ChecklistDatabaseDraggable
   ],
   bootstrap: [AppComponent]
 })
