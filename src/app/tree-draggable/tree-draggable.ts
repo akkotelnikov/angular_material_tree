@@ -1,6 +1,6 @@
 import { SelectionModel } from '@angular/cdk/collections';
 import { FlatTreeControl } from '@angular/cdk/tree';
-import { Component, Injectable, ElementRef, ViewChild } from '@angular/core';
+import {Component, Injectable, ElementRef, ViewChild, Input, OnInit} from '@angular/core';
 import { MatTreeFlatDataSource, MatTreeFlattener } from '@angular/material/tree';
 import { BehaviorSubject } from 'rxjs';
 
@@ -8,12 +8,14 @@ import { BehaviorSubject } from 'rxjs';
  * Node for to-do item
  */
 export class TodoItemNode {
-  children: TodoItemNode[];
+  id: number;
   item: string;
+  children: TodoItemNode[];
 }
 
 /** Flat to-do item node with expandable and level information */
 export class TodoItemFlatNode {
+  id: number;
   item: string;
   level: number;
   expandable: boolean;
@@ -22,23 +24,113 @@ export class TodoItemFlatNode {
 /**
  * The Json object for to-do list data.
  */
-const TREE_DATA = {
-  Groceries: {
-    'Almond Meal flour': null,
-    'Organic eggs': null,
-    'Protein Powder': null,
-    Fruits: {
-      Apple: null,
-      Berries: ['Blueberry', 'Raspberry'],
-      Orange: null
+// const TREE_DATA = {
+//   Groceries: {
+//     'Almond Meal flour': null,
+//     'Organic eggs': null,
+//     'Protein Powder': null,
+//     Fruits: {
+//       Apple: null,
+//       Berries: ['Blueberry', 'Raspberry'],
+//       Orange: null
+//     }
+//   },
+//   Reminders: [
+//     'Cook dinner',
+//     'Read the Material Design spec',
+//     'Upgrade Application to Angular'
+//   ]
+// };
+
+const TREE_DATA = [
+    {
+        id: 1,
+        item: 'Main Checklist',
+        children: [
+            {
+                id: 2,
+                item: 'Procedures that Apply to all Projects and tests',
+                children: [
+                    {
+                        id: 3,
+                        item: 'List of devices to be used on tests',
+                        children: [
+                            {
+                                id: 5,
+                                item: '[0.1.3B]',
+                                children: []
+                            },
+                            {
+                                id: 6,
+                                item: '[0.1.3C]',
+                                children: []
+                            },
+                            {
+                                id: 7,
+                                item: '[0.1.3A]',
+                                children: []
+                            }
+                        ]
+                    },
+                    {
+                        id: 4,
+                        item: 'Testing documentation',
+                        children: [
+                            {
+                                id: 8,
+                                item: '[0.1.1B]',
+                                children: []
+                            },
+                            {
+                                id: 9,
+                                item: '[0.1.4]',
+                                children: []
+                            },
+                            {
+                                id: 10,
+                                item: '[0.1.1A]',
+                                children: []
+                            },
+                            {
+                                id: 10,
+                                item: '[0.1.5]',
+                                children: []
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        id: 11,
+        item: 'Webtools Test ',
+        children: [
+            {
+                id: 12,
+                item: 'first category',
+                children: [
+                    {
+                        id: 13,
+                        item: '3333',
+                        children: [
+                            {
+                                id: 14,
+                                item: '[1111]',
+                                children: []
+                            },
+                            {
+                                id: 15,
+                                item: '[1112]',
+                                children: []
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
     }
-  },
-  Reminders: [
-    'Cook dinner',
-    'Read the Material Design spec',
-    'Upgrade Application to Angular'
-  ]
-};
+];
 
 /**
  * Checklist database, it can build a tree structured Json object.
@@ -50,6 +142,11 @@ export class ChecklistDatabaseDraggable {
   dragNode: any;
 
   dataChange = new BehaviorSubject<TodoItemNode[]>([]);
+
+  flatNodeMap = new Map<TodoItemFlatNode, TodoItemNode>();
+
+  /** Map from nested node to flattened node. This helps us to keep the same object for selection */
+  nestedNodeMap = new Map<TodoItemNode, TodoItemFlatNode>();
 
   get data(): TodoItemNode[] { return this.dataChange.value; }
 
@@ -72,22 +169,18 @@ export class ChecklistDatabaseDraggable {
    * Build the file structure tree. The `value` is the Json object, or a sub-tree of a Json object.
    * The return value is the list of `TodoItemNode`.
    */
-  buildFileTree(obj: object, level: number): TodoItemNode[] {
-    return Object.keys(obj).reduce<TodoItemNode[]>((accumulator, key) => {
-      const value = obj[key];
-      const node = new TodoItemNode();
-      node.item = key;
-
-      if (value != null) {
-        if (typeof value === 'object') {
-          node.children = this.buildFileTree(value, level + 1);
-        } else {
-          node.item = value;
-        }
-      }
-
-      return accumulator.concat(node);
-    }, []);
+  buildFileTree(obj: any[], level: number): TodoItemNode[] {
+      return obj.reduce<TodoItemNode[]>((accumulator, entity) => {
+          console.log('reduce', accumulator, entity);
+          const node = new TodoItemNode();
+          node.id = entity.id;
+          node.item = entity.item;
+          node.children = entity.children;
+          if (!!node.children.length) {
+              node.children = this.buildFileTree(node.children, level + 1);
+          }
+          return accumulator.concat(node);
+      }, []);
   }
 
   /** Add an item to to-do list */
@@ -213,12 +306,7 @@ export class ChecklistDatabaseDraggable {
   templateUrl: './tree-draggable.html',
   styleUrls: ['./tree-draggable.css'],
 })
-export class TreeDraggable {
-  /** Map from flat node to nested node. This helps us finding the nested node to be modified */
-  flatNodeMap = new Map<TodoItemFlatNode, TodoItemNode>();
-
-  /** Map from nested node to flattened node. This helps us to keep the same object for selection */
-  nestedNodeMap = new Map<TodoItemNode, TodoItemFlatNode>();
+export class TreeDraggable implements OnInit {
 
   /** A selected parent node to be inserted */
   selectedParent: TodoItemFlatNode | null = null;
@@ -241,17 +329,21 @@ export class TreeDraggable {
   dragNodeExpandOverTime: number;
   dragNodeExpandOverArea: string;
   @ViewChild('emptyItem') emptyItem: ElementRef;
+  @Input() key: number | string;
 
   constructor(private database: ChecklistDatabaseDraggable) {
     this.treeFlattener = new MatTreeFlattener(this.transformer, this.getLevel, this.isExpandable, this.getChildren);
     this.treeControl = new FlatTreeControl<TodoItemFlatNode>(this.getLevel, this.isExpandable);
     this.dataSource = new MatTreeFlatDataSource(this.treeControl, this.treeFlattener);
-
-    database.dataChange.subscribe(data => {
-      this.dataSource.data = [];
-      this.dataSource.data = data;
-    });
   }
+
+    public ngOnInit() {
+        this.database.dataChange.subscribe(data => {
+            console.log('data1', data, this.key, this);
+            this.dataSource.data = [];
+            this.dataSource.data = [data[this.key]];
+        });
+    }
 
   getLevel = (node: TodoItemFlatNode) => node.level;
 
@@ -259,7 +351,10 @@ export class TreeDraggable {
 
   getChildren = (node: TodoItemNode): TodoItemNode[] => node.children;
 
-  hasChild = (_: number, _nodeData: TodoItemFlatNode) => _nodeData.expandable;
+  hasChild = (_: number, _nodeData: TodoItemFlatNode) => {
+      console.log('hasChild', _nodeData);
+      return _nodeData.expandable;
+  };
 
   hasNoContent = (_: number, _nodeData: TodoItemFlatNode) => _nodeData.item === '';
 
@@ -267,15 +362,16 @@ export class TreeDraggable {
    * Transformer to convert nested node to flat node. Record the nodes in maps for later use.
    */
   transformer = (node: TodoItemNode, level: number) => {
-    const existingNode = this.nestedNodeMap.get(node);
+    const existingNode = this.database.nestedNodeMap.get(node);
     const flatNode = existingNode && existingNode.item === node.item
-      ? existingNode
-      : new TodoItemFlatNode();
+    ? existingNode
+    : new TodoItemFlatNode();
     flatNode.item = node.item;
     flatNode.level = level;
     flatNode.expandable = (node.children && node.children.length > 0);
-    this.flatNodeMap.set(flatNode, node);
-    this.nestedNodeMap.set(node, flatNode);
+    console.log('transformer node', node, flatNode);
+    this.database.flatNodeMap.set(flatNode, node);
+    this.database.nestedNodeMap.set(node, flatNode);
     return flatNode;
   }
 
@@ -303,14 +399,14 @@ export class TreeDraggable {
 
   /** Select the category so we can insert the new item. */
   addNewItem(node: TodoItemFlatNode) {
-    const parentNode = this.flatNodeMap.get(node);
+    const parentNode = this.database.flatNodeMap.get(node);
     this.database.insertItem(parentNode, '');
     this.treeControl.expand(node);
   }
 
   /** Save the node to database */
   saveNode(node: TodoItemFlatNode, itemValue: string) {
-    const nestedNode = this.flatNodeMap.get(node);
+    const nestedNode = this.database.flatNodeMap.get(node);
     this.database.updateItem(nestedNode, itemValue);
   }
 
@@ -351,20 +447,20 @@ export class TreeDraggable {
 
   handleDrop(event, node) {
     console.log('handleDrop', node, this.database.dragNode);
-    console.log('!', this.database.dragNode, this.flatNodeMap);
+    console.log('!', this.database.dragNode, this.database.flatNodeMap);
     event.preventDefault();
-    if (node !== this.database.dragNode) {
-      let newItem: TodoItemNode;
-      if (this.dragNodeExpandOverArea === 'above') {
-        newItem = this.database.copyPasteItemAbove(this.flatNodeMap.get(this.database.dragNode), this.flatNodeMap.get(node));
-      } else if (this.dragNodeExpandOverArea === 'below') {
-        newItem = this.database.copyPasteItemBelow(this.flatNodeMap.get(this.database.dragNode), this.flatNodeMap.get(node));
-      } else {
-        newItem = this.database.copyPasteItem(this.flatNodeMap.get(this.database.dragNode), this.flatNodeMap.get(node));
-      }
-      console.log('newItem', newItem);
-      this.database.deleteItem(this.flatNodeMap.get(this.database.dragNode));
-      this.treeControl.expandDescendants(this.nestedNodeMap.get(newItem));
+    if (!!node && node !== this.database.dragNode) {
+        let newItem: TodoItemNode;
+        if (this.dragNodeExpandOverArea === 'above') {
+          newItem = this.database.copyPasteItemAbove(this.database.flatNodeMap.get(this.database.dragNode), this.database.flatNodeMap.get(node));
+        } else if (this.dragNodeExpandOverArea === 'below') {
+          newItem = this.database.copyPasteItemBelow(this.database.flatNodeMap.get(this.database.dragNode), this.database.flatNodeMap.get(node));
+        } else {
+          newItem = this.database.copyPasteItem(this.database.flatNodeMap.get(this.database.dragNode), this.database.flatNodeMap.get(node));
+        }
+        this.database.deleteItem(this.database.flatNodeMap.get(this.database.dragNode));
+        this.treeControl.expandDescendants(this.database.nestedNodeMap.get(newItem));
+        console.log('newItem', this.database.nestedNodeMap.get(newItem), this.database.nestedNodeMap.get(newItem));
     }
     this.database.dragNode = null;
     this.dragNodeExpandOverNode = null;
