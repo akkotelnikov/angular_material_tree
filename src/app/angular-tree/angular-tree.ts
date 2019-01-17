@@ -104,12 +104,12 @@ export class ChecklistDatabase {
  * @title Tree with checkboxes
  */
 @Component({
-    selector: 'tree-checklist-example',
-    templateUrl: 'tree-checklist-example.html',
-    styleUrls: ['tree-checklist-example.css'],
+    selector: 'angular-tree',
+    templateUrl: 'angular-tree.html',
+    styleUrls: ['angular-tree.css'],
     providers: [ChecklistDatabase]
 })
-export class TreeChecklistExample {
+export class AngularTree {
     /** Map from flat node to nested node. This helps us finding the nested node to be modified */
     flatNodeMap = new Map<TodoItemFlatNode, TodoItemNode>();
 

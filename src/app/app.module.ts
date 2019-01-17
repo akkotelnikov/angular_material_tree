@@ -42,6 +42,7 @@ import { CdkTreeFlatExample, FileDatabase } from './cdk-tree-flat-example/cdk-tr
 import { ChecklistDatabase, TreeChecklistExample } from './tree-checklist-example/tree-checklist-example';
 import { DynamicDataSource, TreeDynamicExample } from './tree-dynamic-example/tree-dynamic-example';
 import {TreeNestedOverviewExample} from './tree-nested-overview-example/tree-nested-overview-example';
+import { AngularTree } from './angular-tree/angular-tree';
 
 @NgModule({
   declarations: [
@@ -49,7 +50,8 @@ import {TreeNestedOverviewExample} from './tree-nested-overview-example/tree-nes
     CdkTreeFlatExample,
     TreeChecklistExample,
     TreeDynamicExample,
-    TreeNestedOverviewExample
+    TreeNestedOverviewExample,
+    AngularTree
   ],
   imports: [
     BrowserModule,
