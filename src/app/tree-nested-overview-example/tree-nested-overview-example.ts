@@ -2,6 +2,7 @@ import {NestedTreeControl} from '@angular/cdk/tree';
 import {Component, Injectable} from '@angular/core';
 import {MatTreeNestedDataSource} from '@angular/material/tree';
 import {BehaviorSubject} from 'rxjs';
+import {TodoItemNode} from '../tree-checklist-example/tree-checklist-example';
 
 /**
  * Json node data with nested structure. Each node has a filename and a value or a list of children
@@ -101,6 +102,10 @@ export class FileDatabase {
             return accumulator.concat(node);
         }, []);
     }
+
+    findNodeNestedTree() {
+
+    }
 }
 
 /**
@@ -116,7 +121,7 @@ export class TreeNestedOverviewExample {
     nestedTreeControl: NestedTreeControl<FileNode>;
     nestedDataSource: MatTreeNestedDataSource<FileNode>;
 
-    constructor(database: FileDatabase) {
+    constructor(public database: FileDatabase) {
         this.nestedTreeControl = new NestedTreeControl<FileNode>(this._getChildren);
         this.nestedDataSource = new MatTreeNestedDataSource();
 
@@ -126,6 +131,17 @@ export class TreeNestedOverviewExample {
     hasNestedChild = (_: number, nodeData: FileNode) => !nodeData.type;
 
     private _getChildren = (node: FileNode) => node.children;
+
+    public addNewItem(node: FileNode) {
+        /** Add an item to to-do list */
+        console.log('addNewItem', node, this.nestedDataSource.data, this);
+        const data = this.database.dataChange.getValue();
+        data[0].children.push(node);
+        this.database.dataChange.next(data);
+        this.nestedTreeControl.expand(data[0]);
+    }
+
+
 }
 
 

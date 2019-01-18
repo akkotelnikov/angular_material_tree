@@ -16,6 +16,7 @@
           </mat-icon>
         </button>
         {{node.filename}}
+        <button mat-icon-button (click)="addNewItem(node)"><mat-icon>add</mat-icon></button>
       </div>
       <ul [class.example-tree-invisible]="!nestedTreeControl.isExpanded(node)">
         <ng-container matTreeNodeOutlet></ng-container>

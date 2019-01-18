@@ -220,11 +220,13 @@ export class AngularTree {
      * Transformer to convert nested node to flat node. Record the nodes in maps for later use.
      */
     transformer = (node: TodoItemNode, level: number) => {
+        console.log('transformer', node);
         const existingNode = this.nestedNodeMap.get(node);
         const flatNode = existingNode && existingNode.item === node.item
             ? existingNode
             : new TodoItemFlatNode();
-        flatNode.item = node.item;
+        const time = new Date();
+        flatNode.item = node.item + '|' + time.getTime();
         flatNode.level = level;
         flatNode.expandable = !!node.children.length;
         this.flatNodeMap.set(flatNode, node);
