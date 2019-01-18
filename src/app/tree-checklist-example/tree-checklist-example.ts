@@ -252,6 +252,7 @@ export class TreeChecklistExample {
     addNewItem(node: TodoItemFlatNode) {
         const parentNode = this.flatNodeMap.get(node);
         this.database.insertItem(parentNode!, '');
+        console.log('addNewItem', node, parentNode, this.flatNodeMap);
         this.treeControl.expand(node);
     }
 
