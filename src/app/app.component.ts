@@ -67,6 +67,5 @@ const TREE_DATA = fromJS({
   styleUrls: ['./app.component.css']
 })
 export class AppComponent {
-  title = 'angular-tree';
   treeData = TREE_DATA;
 }

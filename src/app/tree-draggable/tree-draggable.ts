@@ -5,44 +5,6 @@ import { MatTreeFlatDataSource, MatTreeFlattener } from '@angular/material/tree'
 import { BehaviorSubject } from 'rxjs';
 import { CategoryNode, CategoryNodeFlat } from '../cdk-tree-flat-example/category.model';
 
-/**
- * Node for to-do item
- */
-// export class TodoItemNode {
-//   id: number;
-//   item: string;
-//   children: TodoItemNode[];
-// }
-//
-// /** Flat to-do item node with expandable and level information */
-// export class TodoItemFlatNode {
-//   id: number;
-//   item: string;
-//   level: number;
-//   expandable: boolean;
-// }
-
-/**
- * The Json object for to-do list data.
- */
-// const TREE_DATA = {
-//   Groceries: {
-//     'Almond Meal flour': null,
-//     'Organic eggs': null,
-//     'Protein Powder': null,
-//     Fruits: {
-//       Apple: null,
-//       Berries: ['Blueberry', 'Raspberry'],
-//       Orange: null
-//     }
-//   },
-//   Reminders: [
-//     'Cook dinner',
-//     'Read the Material Design spec',
-//     'Upgrade Application to Angular'
-//   ]
-// };
-
 const TREE_DATA = [
     {
         id: 1,
@@ -133,11 +95,6 @@ const TREE_DATA = [
     }
 ];
 
-/**
- * Checklist database, it can build a tree structured Json object.
- * Each node in Json object represents a to-do item or a category.
- * If a node is a category, it has children items and new items can be added under the category.
- */
 @Injectable()
 export class ChecklistDatabaseDraggable {
   dragNode: any;
@@ -146,30 +103,19 @@ export class ChecklistDatabaseDraggable {
 
   flatNodeMap = new Map<CategoryNodeFlat, CategoryNode>();
 
-  /** Map from nested node to flattened node. This helps us to keep the same object for selection */
   nestedNodeMap = new Map<CategoryNode, CategoryNodeFlat>();
 
   get data(): CategoryNode[] { return this.dataChange.value; }
 
   constructor() {
-    const time = new Date();
-    console.log('ChecklistDatabaseDraggable', time.getTime());
     this.initialize();
   }
 
   initialize() {
-    // Build the tree nodes from Json object. The result is a list of `CategoryNode` with nested
-    //     file node as children.
     const data = this.buildFileTree(TREE_DATA, 0);
-    console.log('data', data);
-    // Notify the change.
     this.dataChange.next(data);
   }
 
-  /**
-   * Build the file structure tree. The `value` is the Json object, or a sub-tree of a Json object.
-   * The return value is the list of `CategoryNode`.
-   */
   buildFileTree(obj: any[], level: number): CategoryNode[] {
       return obj.reduce<CategoryNode[]>((accumulator, entity) => {
           const node = new CategoryNode({
@@ -177,12 +123,10 @@ export class ChecklistDatabaseDraggable {
               name: entity.name,
               children: (!!entity.children.length) ? this.buildFileTree(entity.children, level + 1) : []
           });
-          console.log('reduce', node, accumulator, entity);
           return accumulator.concat(node);
       }, []);
   }
 
-  /** Add an item to to-do list */
   insertItem(parent: CategoryNode, name: string): CategoryNode {
     if (!parent.children) {
       parent = parent.set('children', []);
@@ -256,7 +200,6 @@ export class ChecklistDatabaseDraggable {
   }
 
   copyPasteItem(from: CategoryNode, to: CategoryNode): CategoryNode {
-    console.log('copyPasteItem', from, to);
     const newItem = this.insertItem(to, from.name);
     if (from.children) {
       from.children.forEach(child => {
@@ -307,10 +250,8 @@ export class ChecklistDatabaseDraggable {
 })
 export class TreeDraggable implements OnInit {
 
-  /** A selected parent node to be inserted */
   selectedParent: CategoryNodeFlat | null = null;
 
-  /** The new item's name */
   newItemName = '';
 
   treeControl: FlatTreeControl<CategoryNodeFlat>;
@@ -319,7 +260,6 @@ export class TreeDraggable implements OnInit {
 
   dataSource: MatTreeFlatDataSource<CategoryNode, CategoryNodeFlat>;
 
-  /** The selection for checklist */
   checklistSelection = new SelectionModel<CategoryNodeFlat>(true /* multiple */);
 
   /* Drag and drop */
@@ -340,7 +280,6 @@ export class TreeDraggable implements OnInit {
 
     public ngOnInit() {
         this.database.dataChange.subscribe(data => {
-            console.log('data1', data, this.key, this);
             this.dataSource.data = [];
             this.dataSource.data = [data[this.key]];
         });
@@ -358,38 +297,30 @@ export class TreeDraggable implements OnInit {
 
   hasNoContent = (_: number, _nodeData: CategoryNodeFlat) => _nodeData.name === '';
 
-  /**
-   * Transformer to convert nested node to flat node. Record the nodes in maps for later use.
-   */
   transformer = (node: CategoryNode, level: number) => {
     const existingNode = this.database.nestedNodeMap.get(node);
     let flatNode = existingNode && existingNode.name === node.name
     ? existingNode
     : new CategoryNodeFlat();
-    const time = new Date();
     flatNode = flatNode.set('name', node.name);
     flatNode = flatNode.set('level', level);
     flatNode = flatNode.set('expandable', (node.children && node.children.length > 0));
     this.database.flatNodeMap.set(flatNode, node);
     this.database.nestedNodeMap.set(node, flatNode);
-    console.log('transformer node', node, flatNode, this.database.flatNodeMap);
     return flatNode;
   }
 
-  /** Whether all the descendants of the node are selected */
   descendantsAllSelected(node: CategoryNodeFlat): boolean {
     const descendants = this.treeControl.getDescendants(node);
     return descendants.every(child => this.checklistSelection.isSelected(child));
   }
 
-  /** Whether part of the descendants are selected */
   descendantsPartiallySelected(node: CategoryNodeFlat): boolean {
     const descendants = this.treeControl.getDescendants(node);
     const result = descendants.some(child => this.checklistSelection.isSelected(child));
     return result && !this.descendantsAllSelected(node);
   }
 
-  /** Toggle the to-do item selection. Select/deselect all the descendants node */
   todoItemSelectionToggle(node: CategoryNodeFlat): void {
     this.checklistSelection.toggle(node);
     const descendants = this.treeControl.getDescendants(node);
@@ -398,23 +329,18 @@ export class TreeDraggable implements OnInit {
       : this.checklistSelection.deselect(...descendants);
   }
 
-  /** Select the category so we can insert the new item. */
   addNewItem(node: CategoryNodeFlat) {
     const parentNode = this.database.flatNodeMap.get(node);
     this.database.insertItem(parentNode, '');
     this.treeControl.expand(node);
   }
 
-  /** Save the node to database */
   saveNode(node: CategoryNodeFlat, itemValue: string) {
-    console.log('saveNode node', node);
     const nestedNode = this.database.flatNodeMap.get(node);
-    console.log('saveNode nestedNode', nestedNode, this.database.flatNodeMap);
     this.database.updateItem(nestedNode, itemValue);
   }
 
   handleDragStart(event, node) {
-    // Required by Firefox (https://stackoverflow.com/questions/19055264/why-doesnt-html5-drag-and-drop-work-in-firefox)
     event.dataTransfer.setData('foo', 'bar');
     event.dataTransfer.setDragImage(this.emptyItem.nativeElement, 0, 0);
     this.database.dragNode = node;
@@ -423,8 +349,6 @@ export class TreeDraggable implements OnInit {
 
   handleDragOver(event, node) {
     event.preventDefault();
-
-    // Handle node expand
     if (node === this.dragNodeExpandOverNode) {
       if (this.database.dragNode !== node && !this.treeControl.isExpanded(node)) {
         if ((new Date().getTime() - this.dragNodeExpandOverTime) > this.dragNodeExpandOverWaitTimeMs) {
@@ -449,8 +373,6 @@ export class TreeDraggable implements OnInit {
   }
 
   handleDrop(event, node) {
-    console.log('handleDrop', node, this.database.dragNode);
-    console.log('!', this.database.dragNode, this.database.flatNodeMap);
     event.preventDefault();
     if (!!node && node !== this.database.dragNode) {
         let newItem: CategoryNode;
@@ -463,7 +385,6 @@ export class TreeDraggable implements OnInit {
         }
         this.database.deleteItem(this.database.flatNodeMap.get(this.database.dragNode));
         this.treeControl.expandDescendants(this.database.nestedNodeMap.get(newItem));
-        console.log('newItem', this.database.nestedNodeMap.get(newItem), this.database.nestedNodeMap.get(newItem));
     }
     this.database.dragNode = null;
     this.dragNodeExpandOverNode = null;
