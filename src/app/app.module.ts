@@ -38,21 +38,13 @@ import {
   MatTooltipModule,
   MatTreeModule
 } from '@angular/material';
-import { CdkTreeFlatExample, FileDatabase } from './cdk-tree-flat-example/cdk-tree-flat-example';
-import { ChecklistDatabase, TreeChecklistExample } from './tree-checklist-example/tree-checklist-example';
-import { DynamicDataSource, TreeDynamicExample } from './tree-dynamic-example/tree-dynamic-example';
-import { AngularTree } from './angular-tree/angular-tree';
 import { ChecklistDatabaseDraggable, TreeDraggable } from './tree-draggable/tree-draggable';
 import { NestedTreeComponent } from './nested-tree/nested-tree.component';
 
 @NgModule({
   declarations: [
     AppComponent,
-    CdkTreeFlatExample,
-    TreeChecklistExample,
-    TreeDynamicExample,
     NestedTreeComponent,
-    AngularTree,
     TreeDraggable
   ],
   imports: [
@@ -95,9 +87,6 @@ import { NestedTreeComponent } from './nested-tree/nested-tree.component';
     MatTreeModule,
   ],
   providers: [
-    FileDatabase,
-    ChecklistDatabase,
-    DynamicDataSource,
     ChecklistDatabaseDraggable
   ],
   bootstrap: [AppComponent]

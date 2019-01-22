@@ -3,7 +3,7 @@ import { FlatTreeControl } from '@angular/cdk/tree';
 import {Component, Injectable, ElementRef, ViewChild, Input, OnInit} from '@angular/core';
 import { MatTreeFlatDataSource, MatTreeFlattener } from '@angular/material/tree';
 import { BehaviorSubject } from 'rxjs';
-import { CategoryNode, CategoryNodeFlat } from '../cdk-tree-flat-example/category.model';
+import { CategoryNode, CategoryNodeFlat } from './category.model';
 
 const TREE_DATA = [
     {
