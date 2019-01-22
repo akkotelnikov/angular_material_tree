@@ -3,97 +3,60 @@ import { FlatTreeControl } from '@angular/cdk/tree';
 import {Component, Injectable, ElementRef, ViewChild, Input, OnInit} from '@angular/core';
 import { MatTreeFlatDataSource, MatTreeFlattener } from '@angular/material/tree';
 import { BehaviorSubject } from 'rxjs';
-
-/**
- * Node for to-do item
- */
-export class TodoItemNode {
-  id: number;
-  item: string;
-  children: TodoItemNode[];
-}
-
-/** Flat to-do item node with expandable and level information */
-export class TodoItemFlatNode {
-  id: number;
-  item: string;
-  level: number;
-  expandable: boolean;
-}
-
-/**
- * The Json object for to-do list data.
- */
-// const TREE_DATA = {
-//   Groceries: {
-//     'Almond Meal flour': null,
-//     'Organic eggs': null,
-//     'Protein Powder': null,
-//     Fruits: {
-//       Apple: null,
-//       Berries: ['Blueberry', 'Raspberry'],
-//       Orange: null
-//     }
-//   },
-//   Reminders: [
-//     'Cook dinner',
-//     'Read the Material Design spec',
-//     'Upgrade Application to Angular'
-//   ]
-// };
+import { CategoryNode, CategoryNodeFlat } from '../cdk-tree-flat-example/category.model';
 
 const TREE_DATA = [
     {
         id: 1,
-        item: 'Main Checklist',
+        name: 'Main Checklist',
         children: [
             {
                 id: 2,
-                item: 'Procedures that Apply to all Projects and tests',
+                name: 'Procedures that Apply to all Projects and tests',
                 children: [
                     {
                         id: 3,
-                        item: 'List of devices to be used on tests',
+                        name: 'List of devices to be used on tests',
                         children: [
                             {
                                 id: 5,
-                                item: '[0.1.3B]',
+                                name: '[0.1.3B]',
                                 children: []
                             },
                             {
                                 id: 6,
-                                item: '[0.1.3C]',
+                                name: '[0.1.3C]',
                                 children: []
                             },
                             {
                                 id: 7,
-                                item: '[0.1.3A]',
+                                name: '[0.1.3A]',
                                 children: []
                             }
                         ]
                     },
                     {
                         id: 4,
-                        item: 'Testing documentation',
+                        name: 'Testing documentation',
                         children: [
                             {
                                 id: 8,
-                                item: '[0.1.1B]',
+                                name: '[0.1.1B]',
                                 children: []
                             },
                             {
                                 id: 9,
-                                item: '[0.1.4]',
+                                name: '[0.1.4]',
                                 children: []
                             },
                             {
                                 id: 10,
-                                item: '[0.1.1A]',
+                                name: '[0.1.1A]',
                                 children: []
                             },
                             {
                                 id: 10,
-                                item: '[0.1.5]',
+                                name: '[0.1.5]',
                                 children: []
                             }
                         ]
@@ -104,24 +67,24 @@ const TREE_DATA = [
     },
     {
         id: 11,
-        item: 'Webtools Test ',
+        name: 'Webtools Test ',
         children: [
             {
                 id: 12,
-                item: 'first category',
+                name: 'first category',
                 children: [
                     {
                         id: 13,
-                        item: '3333',
+                        name: '3333',
                         children: [
                             {
                                 id: 14,
-                                item: '[1111]',
+                                name: '[1111]',
                                 children: []
                             },
                             {
                                 id: 15,
-                                item: '[1112]',
+                                name: '[1112]',
                                 children: []
                             }
                         ]
@@ -132,71 +95,51 @@ const TREE_DATA = [
     }
 ];
 
-/**
- * Checklist database, it can build a tree structured Json object.
- * Each node in Json object represents a to-do item or a category.
- * If a node is a category, it has children items and new items can be added under the category.
- */
 @Injectable()
 export class ChecklistDatabaseDraggable {
   dragNode: any;
 
-  dataChange = new BehaviorSubject<TodoItemNode[]>([]);
+  dataChange = new BehaviorSubject<CategoryNode[]>([]);
 
-  flatNodeMap = new Map<TodoItemFlatNode, TodoItemNode>();
+  flatNodeMap = new Map<CategoryNodeFlat, CategoryNode>();
 
-  /** Map from nested node to flattened node. This helps us to keep the same object for selection */
-  nestedNodeMap = new Map<TodoItemNode, TodoItemFlatNode>();
+  nestedNodeMap = new Map<CategoryNode, CategoryNodeFlat>();
 
-  get data(): TodoItemNode[] { return this.dataChange.value; }
+  get data(): CategoryNode[] { return this.dataChange.value; }
 
   constructor() {
-    const time = new Date();
-    console.log('ChecklistDatabaseDraggable', time.getTime());
     this.initialize();
   }
 
   initialize() {
-    // Build the tree nodes from Json object. The result is a list of `TodoItemNode` with nested
-    //     file node as children.
     const data = this.buildFileTree(TREE_DATA, 0);
-
-    // Notify the change.
     this.dataChange.next(data);
   }
 
-  /**
-   * Build the file structure tree. The `value` is the Json object, or a sub-tree of a Json object.
-   * The return value is the list of `TodoItemNode`.
-   */
-  buildFileTree(obj: any[], level: number): TodoItemNode[] {
-      return obj.reduce<TodoItemNode[]>((accumulator, entity) => {
-          console.log('reduce', accumulator, entity);
-          const node = new TodoItemNode();
-          node.id = entity.id;
-          node.item = entity.item;
-          node.children = entity.children;
-          if (!!node.children.length) {
-              node.children = this.buildFileTree(node.children, level + 1);
-          }
+  buildFileTree(obj: any[], level: number): CategoryNode[] {
+      return obj.reduce<CategoryNode[]>((accumulator, entity) => {
+          const node = new CategoryNode({
+              id: entity.id,
+              name: entity.name,
+              children: (!!entity.children.length) ? this.buildFileTree(entity.children, level + 1) : []
+          });
           return accumulator.concat(node);
       }, []);
   }
 
-  /** Add an item to to-do list */
-  insertItem(parent: TodoItemNode, name: string): TodoItemNode {
+  insertItem(parent: CategoryNode, name: string): CategoryNode {
     if (!parent.children) {
-      parent.children = [];
+      parent = parent.set('children', []);
     }
-    const newItem = { item: name } as TodoItemNode;
+    const newItem = new CategoryNode({id: null, name: name, children: []});
     parent.children.push(newItem);
     this.dataChange.next(this.data);
     return newItem;
   }
 
-  insertItemAbove(node: TodoItemNode, name: string): TodoItemNode {
+  insertItemAbove(node: CategoryNode, name: string): CategoryNode {
     const parentNode = this.getParentFromNodes(node);
-    const newItem = { item: name } as TodoItemNode;
+    const newItem = new CategoryNode({id: null, name: name, children: []});
     if (parentNode != null) {
       parentNode.children.splice(parentNode.children.indexOf(node), 0, newItem);
     } else {
@@ -206,9 +149,9 @@ export class ChecklistDatabaseDraggable {
     return newItem;
   }
 
-  insertItemBelow(node: TodoItemNode, name: string): TodoItemNode {
+  insertItemBelow(node: CategoryNode, name: string): CategoryNode {
     const parentNode = this.getParentFromNodes(node);
-    const newItem = { item: name } as TodoItemNode;
+    const newItem = new CategoryNode({id: null, name: name, children: []});
     if (parentNode != null) {
       parentNode.children.splice(parentNode.children.indexOf(node) + 1, 0, newItem);
     } else {
@@ -218,7 +161,7 @@ export class ChecklistDatabaseDraggable {
     return newItem;
   }
 
-  getParentFromNodes(node: TodoItemNode): TodoItemNode {
+  getParentFromNodes(node: CategoryNode): CategoryNode {
     for (let i = 0; i < this.data.length; ++i) {
       const currentRoot = this.data[i];
       const parent = this.getParent(currentRoot, node);
@@ -229,7 +172,7 @@ export class ChecklistDatabaseDraggable {
     return null;
   }
 
-  getParent(currentRoot: TodoItemNode, node: TodoItemNode): TodoItemNode {
+  getParent(currentRoot: CategoryNode, node: CategoryNode): CategoryNode {
     if (currentRoot.children && currentRoot.children.length > 0) {
       for (let i = 0; i < currentRoot.children.length; ++i) {
         const child = currentRoot.children[i];
@@ -246,19 +189,18 @@ export class ChecklistDatabaseDraggable {
     return null;
   }
 
-  updateItem(node: TodoItemNode, name: string) {
-    node.item = name;
+  updateItem(node: CategoryNode, name: string) {
+    node = node.set('name', name);
     this.dataChange.next(this.data);
   }
 
-  deleteItem(node: TodoItemNode) {
+  deleteItem(node: CategoryNode) {
     this.deleteNode(this.data, node);
     this.dataChange.next(this.data);
   }
 
-  copyPasteItem(from: TodoItemNode, to: TodoItemNode): TodoItemNode {
-    console.log('copyPasteItem', from, to);
-    const newItem = this.insertItem(to, from.item);
+  copyPasteItem(from: CategoryNode, to: CategoryNode): CategoryNode {
+    const newItem = this.insertItem(to, from.name);
     if (from.children) {
       from.children.forEach(child => {
         this.copyPasteItem(child, newItem);
@@ -267,8 +209,8 @@ export class ChecklistDatabaseDraggable {
     return newItem;
   }
 
-  copyPasteItemAbove(from: TodoItemNode, to: TodoItemNode): TodoItemNode {
-    const newItem = this.insertItemAbove(to, from.item);
+  copyPasteItemAbove(from: CategoryNode, to: CategoryNode): CategoryNode {
+    const newItem = this.insertItemAbove(to, from.name);
     if (from.children) {
       from.children.forEach(child => {
         this.copyPasteItem(child, newItem);
@@ -277,8 +219,8 @@ export class ChecklistDatabaseDraggable {
     return newItem;
   }
 
-  copyPasteItemBelow(from: TodoItemNode, to: TodoItemNode): TodoItemNode {
-    const newItem = this.insertItemBelow(to, from.item);
+  copyPasteItemBelow(from: CategoryNode, to: CategoryNode): CategoryNode {
+    const newItem = this.insertItemBelow(to, from.name);
     if (from.children) {
       from.children.forEach(child => {
         this.copyPasteItem(child, newItem);
@@ -287,7 +229,7 @@ export class ChecklistDatabaseDraggable {
     return newItem;
   }
 
-  deleteNode(nodes: TodoItemNode[], nodeToDelete: TodoItemNode) {
+  deleteNode(nodes: CategoryNode[], nodeToDelete: CategoryNode) {
     const index = nodes.indexOf(nodeToDelete, 0);
     if (index > -1) {
       nodes.splice(index, 1);
@@ -308,20 +250,17 @@ export class ChecklistDatabaseDraggable {
 })
 export class TreeDraggable implements OnInit {
 
-  /** A selected parent node to be inserted */
-  selectedParent: TodoItemFlatNode | null = null;
+  selectedParent: CategoryNodeFlat | null = null;
 
-  /** The new item's name */
   newItemName = '';
 
-  treeControl: FlatTreeControl<TodoItemFlatNode>;
+  treeControl: FlatTreeControl<CategoryNodeFlat>;
 
-  treeFlattener: MatTreeFlattener<TodoItemNode, TodoItemFlatNode>;
+  treeFlattener: MatTreeFlattener<CategoryNode, CategoryNodeFlat>;
 
-  dataSource: MatTreeFlatDataSource<TodoItemNode, TodoItemFlatNode>;
+  dataSource: MatTreeFlatDataSource<CategoryNode, CategoryNodeFlat>;
 
-  /** The selection for checklist */
-  checklistSelection = new SelectionModel<TodoItemFlatNode>(true /* multiple */);
+  checklistSelection = new SelectionModel<CategoryNodeFlat>(true /* multiple */);
 
   /* Drag and drop */
   dragNodeExpandOverWaitTimeMs = 300;
@@ -330,66 +269,59 @@ export class TreeDraggable implements OnInit {
   dragNodeExpandOverArea: string;
   @ViewChild('emptyItem') emptyItem: ElementRef;
   @Input() key: number | string;
+  time: Date;
 
   constructor(private database: ChecklistDatabaseDraggable) {
     this.treeFlattener = new MatTreeFlattener(this.transformer, this.getLevel, this.isExpandable, this.getChildren);
-    this.treeControl = new FlatTreeControl<TodoItemFlatNode>(this.getLevel, this.isExpandable);
+    this.treeControl = new FlatTreeControl<CategoryNodeFlat>(this.getLevel, this.isExpandable);
     this.dataSource = new MatTreeFlatDataSource(this.treeControl, this.treeFlattener);
+    this.time = new Date();
   }
 
     public ngOnInit() {
         this.database.dataChange.subscribe(data => {
-            console.log('data1', data, this.key, this);
             this.dataSource.data = [];
             this.dataSource.data = [data[this.key]];
         });
     }
 
-  getLevel = (node: TodoItemFlatNode) => node.level;
+  getLevel = (node: CategoryNodeFlat) => node.level;
 
-  isExpandable = (node: TodoItemFlatNode) => node.expandable;
+  isExpandable = (node: CategoryNodeFlat) => node.expandable;
 
-  getChildren = (node: TodoItemNode): TodoItemNode[] => node.children;
+  getChildren = (node: CategoryNode): CategoryNode[] => node.children;
 
-  hasChild = (_: number, _nodeData: TodoItemFlatNode) => {
-      console.log('hasChild', _nodeData);
+  hasChild = (_: number, _nodeData: CategoryNodeFlat) => {
       return _nodeData.expandable;
   };
 
-  hasNoContent = (_: number, _nodeData: TodoItemFlatNode) => _nodeData.item === '';
+  hasNoContent = (_: number, _nodeData: CategoryNodeFlat) => _nodeData.name === '';
 
-  /**
-   * Transformer to convert nested node to flat node. Record the nodes in maps for later use.
-   */
-  transformer = (node: TodoItemNode, level: number) => {
+  transformer = (node: CategoryNode, level: number) => {
     const existingNode = this.database.nestedNodeMap.get(node);
-    const flatNode = existingNode && existingNode.item === node.item
+    let flatNode = existingNode && existingNode.name === node.name
     ? existingNode
-    : new TodoItemFlatNode();
-    flatNode.item = node.item;
-    flatNode.level = level;
-    flatNode.expandable = (node.children && node.children.length > 0);
-    console.log('transformer node', node, flatNode);
+    : new CategoryNodeFlat();
+    flatNode = flatNode.set('name', node.name);
+    flatNode = flatNode.set('level', level);
+    flatNode = flatNode.set('expandable', (node.children && node.children.length > 0));
     this.database.flatNodeMap.set(flatNode, node);
     this.database.nestedNodeMap.set(node, flatNode);
     return flatNode;
   }
 
-  /** Whether all the descendants of the node are selected */
-  descendantsAllSelected(node: TodoItemFlatNode): boolean {
+  descendantsAllSelected(node: CategoryNodeFlat): boolean {
     const descendants = this.treeControl.getDescendants(node);
     return descendants.every(child => this.checklistSelection.isSelected(child));
   }
 
-  /** Whether part of the descendants are selected */
-  descendantsPartiallySelected(node: TodoItemFlatNode): boolean {
+  descendantsPartiallySelected(node: CategoryNodeFlat): boolean {
     const descendants = this.treeControl.getDescendants(node);
     const result = descendants.some(child => this.checklistSelection.isSelected(child));
     return result && !this.descendantsAllSelected(node);
   }
 
-  /** Toggle the to-do item selection. Select/deselect all the descendants node */
-  todoItemSelectionToggle(node: TodoItemFlatNode): void {
+  todoItemSelectionToggle(node: CategoryNodeFlat): void {
     this.checklistSelection.toggle(node);
     const descendants = this.treeControl.getDescendants(node);
     this.checklistSelection.isSelected(node)
@@ -397,21 +329,18 @@ export class TreeDraggable implements OnInit {
       : this.checklistSelection.deselect(...descendants);
   }
 
-  /** Select the category so we can insert the new item. */
-  addNewItem(node: TodoItemFlatNode) {
+  addNewItem(node: CategoryNodeFlat) {
     const parentNode = this.database.flatNodeMap.get(node);
     this.database.insertItem(parentNode, '');
     this.treeControl.expand(node);
   }
 
-  /** Save the node to database */
-  saveNode(node: TodoItemFlatNode, itemValue: string) {
+  saveNode(node: CategoryNodeFlat, itemValue: string) {
     const nestedNode = this.database.flatNodeMap.get(node);
     this.database.updateItem(nestedNode, itemValue);
   }
 
   handleDragStart(event, node) {
-    // Required by Firefox (https://stackoverflow.com/questions/19055264/why-doesnt-html5-drag-and-drop-work-in-firefox)
     event.dataTransfer.setData('foo', 'bar');
     event.dataTransfer.setDragImage(this.emptyItem.nativeElement, 0, 0);
     this.database.dragNode = node;
@@ -420,8 +349,6 @@ export class TreeDraggable implements OnInit {
 
   handleDragOver(event, node) {
     event.preventDefault();
-
-    // Handle node expand
     if (node === this.dragNodeExpandOverNode) {
       if (this.database.dragNode !== node && !this.treeControl.isExpanded(node)) {
         if ((new Date().getTime() - this.dragNodeExpandOverTime) > this.dragNodeExpandOverWaitTimeMs) {
@@ -446,11 +373,9 @@ export class TreeDraggable implements OnInit {
   }
 
   handleDrop(event, node) {
-    console.log('handleDrop', node, this.database.dragNode);
-    console.log('!', this.database.dragNode, this.database.flatNodeMap);
     event.preventDefault();
     if (!!node && node !== this.database.dragNode) {
-        let newItem: TodoItemNode;
+        let newItem: CategoryNode;
         if (this.dragNodeExpandOverArea === 'above') {
           newItem = this.database.copyPasteItemAbove(this.database.flatNodeMap.get(this.database.dragNode), this.database.flatNodeMap.get(node));
         } else if (this.dragNodeExpandOverArea === 'below') {
@@ -460,7 +385,6 @@ export class TreeDraggable implements OnInit {
         }
         this.database.deleteItem(this.database.flatNodeMap.get(this.database.dragNode));
         this.treeControl.expandDescendants(this.database.nestedNodeMap.get(newItem));
-        console.log('newItem', this.database.nestedNodeMap.get(newItem), this.database.nestedNodeMap.get(newItem));
     }
     this.database.dragNode = null;
     this.dragNodeExpandOverNode = null;

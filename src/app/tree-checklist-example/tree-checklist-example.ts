@@ -89,6 +89,7 @@ export class ChecklistDatabase {
     /** Add an item to to-do list */
     insertItem(parent: TodoItemNode, name: string) {
         if (parent.children) {
+            console.log('insertItem', this.data);
             parent.children.push({item: name} as TodoItemNode);
             this.dataChange.next(this.data);
         }
@@ -110,6 +111,9 @@ export class ChecklistDatabase {
     providers: [ChecklistDatabase]
 })
 export class TreeChecklistExample {
+
+    currentTime: Date;
+
     /** Map from flat node to nested node. This helps us finding the nested node to be modified */
     flatNodeMap = new Map<TodoItemFlatNode, TodoItemNode>();
 
@@ -132,6 +136,7 @@ export class TreeChecklistExample {
     checklistSelection = new SelectionModel<TodoItemFlatNode>(true /* multiple */);
 
     constructor(private database: ChecklistDatabase) {
+        this.currentTime = new Date();
         this.treeFlattener = new MatTreeFlattener(this.transformer, this.getLevel,
             this.isExpandable, this.getChildren);
         this.treeControl = new FlatTreeControl<TodoItemFlatNode>(this.getLevel, this.isExpandable);
@@ -156,10 +161,12 @@ export class TreeChecklistExample {
      * Transformer to convert nested node to flat node. Record the nodes in maps for later use.
      */
     transformer = (node: TodoItemNode, level: number) => {
+        console.log('transformer', node);
         const existingNode = this.nestedNodeMap.get(node);
         const flatNode = existingNode && existingNode.item === node.item
             ? existingNode
             : new TodoItemFlatNode();
+        const time = new Date();
         flatNode.item = node.item;
         flatNode.level = level;
         flatNode.expandable = !!node.children;
@@ -258,6 +265,7 @@ export class TreeChecklistExample {
 
     /** Save the node to database */
     saveNode(node: TodoItemFlatNode, itemValue: string) {
+        this.currentTime = new Date();
         const nestedNode = this.flatNodeMap.get(node);
         this.database.updateItem(nestedNode!, itemValue);
     }

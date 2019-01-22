@@ -13,7 +13,7 @@
                   (dragstart)="handleDragStart($event, node);"
                   (dragover)="handleDragOver($event, node);"
                   (drop)="handleDrop($event, node);"
-                  (dragend)="handleDragEnd($event);">{{node.item}}</mat-checkbox>
+                  (dragend)="handleDragEnd($event);">{{node.get('name')}}</mat-checkbox>
   </mat-tree-node>
 
   <mat-tree-node *matTreeNodeDef="let node; when: hasNoContent" matTreeNodePadding>
@@ -27,7 +27,7 @@
   <mat-tree-node *matTreeNodeDef="let node; when: hasChild"
                  matTreeNodePadding>
     <button mat-icon-button matTreeNodeToggle
-            [attr.aria-label]="'toggle ' + node.item">
+            [attr.aria-label]="'toggle ' + node.name">
       <mat-icon class="mat-icon-rtl-mirror">
         {{treeControl.isExpanded(node) ? 'expand_more' : 'chevron_right'}}
       </mat-icon>
@@ -42,7 +42,7 @@
                   (dragend)="handleDragEnd($event);"
                   [checked]="descendantsAllSelected(node)"
                   [indeterminate]="descendantsPartiallySelected(node)"
-                  (change)="todoItemSelectionToggle(node)">{{node.item}}</mat-checkbox>
+                  (change)="todoItemSelectionToggle(node)">{{node.get('name')}}</mat-checkbox>
     <button mat-icon-button (click)="addNewItem(node)"><mat-icon>add</mat-icon></button>
   </mat-tree-node>
 </mat-tree>
